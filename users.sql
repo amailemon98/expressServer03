@@ -26,6 +26,7 @@ SELECT * FROM users;
 
 SELECT * FROM users WHERE id = 1
 SELECT * FROM users WHERE user_id = 'hong';
+SELECT count(*) as count FROM users WHERE user_id = 'hong';
 SELECT * FROM users WHERE user_id = 'kim' and id = 1;
 SELECT * FROM users WHERE user_id = 'kim' or id = 1;
 
@@ -41,3 +42,15 @@ UPDATE users SET
   WHERE user_id = 'kim' and user_pwd = '12345';
 
  
+
+ SELECT * FROM users WHERE
+ SELECT count(*) as count FROM users WHERE user_id = 'kim' and user_pwd ='12345'; 갖고 온 데이터의 개수를 구함
+
+INSERT INTO users (user_name, user_id, user_pwd, user_email, user_phone) 
+  VALUES ('이길동', 'lee', '12345', 'lee@gmail.com', '01011111111'),
+  ('김길동', 'kim', '12345', 'kim@gmail.com', '01011111111'),
+  ('고길동', 'goo', '12345', 'goo@gmail.com', '01011111111');
+
+
+  INSERT INTO users (user_name, user_id, user_pwd, user_email, user_phone) 
+  VALUES ('이길동', 'lee', '12345', 'lee@gmail.com', '01011111111')

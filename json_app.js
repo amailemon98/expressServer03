@@ -89,7 +89,11 @@ app.get('/user/:id', async (req, res) => {
 
 
 let maxlength = 0;
-app.post('/user', async (req, res, next)=>{ 
+// login : id, pwd => 추가해보기
+app.post('/login-user', async (req, res, next)=>{}) 
+
+// register : 모든 데이터를 다 넘겨줘야함
+app.post('/create-user', async (req, res, next)=>{ 
     const filePath = path.join(__dirname, 'model', 'users.json');
 
     // 파일이 존재하는지 확인

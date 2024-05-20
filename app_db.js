@@ -15,7 +15,8 @@ const logEvents = require('./middleware/logEvents.js'); // js
 // 2. next(0)로 라우터 제어해보기
 // 3. localhost:3000/user?name=kim&age=30 (쿼리스트링)
 
-//  js에서 db에 직접 연결하는 방식
+// js에서 db에 직접 연결하는 방식
+// npm i mariadb 드라이버 가져옴
 const mariadb = require('mariadb'); //npm i mariadb 드라이버 가져오기
 const pool = mariadb.createPool({
     host: '127.0.0.1',
@@ -81,10 +82,10 @@ app.get('/all-user', async (req, res) => {
         // const datas = await fs.readFile(path.join(__dirname, 'model', 'users.json'));
         // const users = await JSON.parse(datas);
         // error
-        conn = await pool.getConnection();
+        conn = await pool.getConnection(); // pool을 얻을 때까지 기다린다.
         if(conn){ // 5명 안에 들었으면
-            const sql = `SELECT * FROM users;`;
-            const rows = await conn.query(sql);
+            const sql = `SELECT * FROM users;`; //내용을 다 보여달라
+            const rows = await conn.query(sql); //실행해 달라
             // console.log( rows );
             res.send(rows);
         }else{
@@ -93,6 +94,8 @@ app.get('/all-user', async (req, res) => {
         // res.send( 'all-user' )
     }catch{
         console.log('에러')
+    }finally{
+        if(conn) conn.close();
     }
 });
 
@@ -135,14 +138,85 @@ app.get('/user/:name',  async (req, res) => {
     }
 });
 
-app.post('/user', async (req, res) => {  
-    let body = req.body;
-    try{
-        res.send('create');
+// login
+app.post('/login-user', async (req, res) => {  
 
-        // if(req.body) throw new Error('req.body undefined')
+    let {user_id, user_pwd} = req.body;
+    // console.log( user_id, user_pwd)
+    // const sql1 = `SELECT * FROM users WHERE user_id = '${user_id}' and user_pwd = '${user_pwd}';`
+    const sql1 = `SELECT count(*) as count FROM users WHERE user_id = '${user_id}' and user_pwd ='${user_pwd}';`;
+    let conn;
+    try{
+        conn = await pool.getConnection(); 
+        if(conn){
+            
+            const rows =  await conn.query(sql1);
+            console.log(rows); //[ { count: 0n } ]
+
+            const count = rows[0].count.toString();
+            console.log(count); //[ { count: 0n } ]
+
+            // if(rows.length){
+            if(count >= 1){
+                res.send('login');
+            }else{
+                res.send('아이디 또는 비밀번호를 확인하세요.')
+            }
+            }
+
+    }catch(error){
+        console.log(error)
+    }finally{
+        if(conn) conn.close();
+    }
+});
+
+// create
+app.post('/create-user', async (req, res) => {  
+    let {user_name, user_id, user_pwd, user_phone, user_email} = req.body;
+    console.log(user_name, user_id, user_pwd, user_phone, user_email);
+    let conn;
+
+    const sql1 = ` SELECT count(*) as count FROM users WHERE user_id = '${user_id}';`
+
+    // 비밀번호를 암호화 시켜서 user_pwd 대신에 hash_pwd 저장하는 과정이 필요
+    const sql2 = `  INSERT INTO 
+                    users (user_name, user_id, user_pwd, user_email, user_phone) 
+                    VALUES ('${user_name}', '${user_id}', '${user_pwd}', '${user_email}', '${user_phone}')
+                 `
+    
+    //비동기 처리 : 완료를 보증하지 않고 무조건 실행 (병렬처리처럼 보임)
+    try{
+        conn = await pool.getConnection(); //없으면 올때까지 대기
+        // 대기
+        if(conn){
+            const rows1 = await conn.query(sql1)
+            console.log(rows1); //[ { count: 0n } ]
+
+            if(rows1[0].count.toString() === '0'){
+                const rows = await conn.query(sql2);
+                console.log(rows);
+                // OkPacket { affectedRows: 1, insertId: 9n, warningStatus: 0 }
+
+                if(rows.affectedRows ){
+                    res.send('create');
+                }else{
+                    res.send('데이터를 확인하세요.');
+                }
+            }else{
+                // res.send('아이디 또는 비밀번호를 확인하세요')
+                res.send('이미 사용되고 있는 아이디 입니다.')
+            }
+
+        }else{
+            res.send('잠시 후에 다시 처리해주세요.')
+        }
+        
+        
     }catch{
         console.log(error)
+    }finally{
+        if(conn) conn.close();
     }
 });
 
